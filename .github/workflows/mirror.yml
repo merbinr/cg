@@ -5,6 +5,10 @@ on:
   schedule:
     - cron: 0 12 * * *
 
+env:
+  SOURCE_REGISTRY: "cgr.dev/chainguard"
+  TARGET_REGISTRY: "ghcr.io/${{ github.repository }}"
+
 permissions:
   id-token: write
   packages: write
@@ -16,6 +20,9 @@ jobs:
   Mirror-Images:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
       - name: Install regclient
         run: |
           sudo apt-get install curl -y
@@ -29,29 +36,42 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Mirror PostgreSQL Images
+      - name: Mirroring PostgreSQL Image
         env:
-          TARGET_IMAGE: "ghcr.io/${{ github.repository }}/postgres"
+          IMAGE_NAME: postgres
         run: |
-          version=$(docker run --rm cgr.dev/chainguard/postgres:latest --version | grep -oP "[0-9]+\.[0-9]+")
-          IFS="." read -r -a parts <<< $version
-          versions=(latest)
-          current=""
-          for value in ${parts[@]}; do [[ -z $current ]] && current=$value || current+=".$value" ; versions=(${versions[@]} "$current"); done
-          for tag in ${versions[@]}; do ./regctl image copy cgr.dev/chainguard/postgres:latest $TARGET_IMAGE:$tag; done
+          version=$(docker run --rm $SOURCE_REGISTRY/$IMAGE_NAME:latest --version | grep -oP "[0-9]+\.[0-9]+")
+          bash mirror_image.sh $IMAGE_NAME $version
 
-      - name: Mirror Nginx Images
+      - name: Mirroring Nginx Image
         env:
-          TARGET_IMAGE: "ghcr.io/${{ github.repository }}/nginx"
+          IMAGE_NAME: nginx
         run: |
-          version=$(docker run --rm cgr.dev/chainguard/nginx:latest -v 2>&1 | grep -oP "[0-9]+\.[0-9]+")
-          IFS="." read -r -a parts <<< $version
-          versions=(latest)
-          current=""
-          for value in ${parts[@]}; do [[ -z $current ]] && current=$value || current+=".$value" ; versions=(${versions[@]} "$current"); done
-          for tag in ${versions[@]}; do ./regctl image copy cgr.dev/chainguard/nginx:latest $TARGET_IMAGE:$tag; done
+          version=$(docker run --rm $SOURCE_REGISTRY/$IMAGE_NAME:latest -v 2>&1 | grep -oP "[0-9]+\.[0-9]+")
+          bash mirror_image.sh $IMAGE_NAME $version
 
-      - name: Mirror Static Images
+      - name: Mirroring Python Image
         env:
-          TARGET_IMAGE: "ghcr.io/${{ github.repository }}/static"
-        run: ./regctl image copy cgr.dev/chainguard/static:latest $TARGET_IMAGE:latest
+          IMAGE_NAME: python
+        run: |
+          version=$(docker run --rm $SOURCE_REGISTRY/$IMAGE_NAME:latest --version | grep -oP "[0-9]+\.[0-9]+")
+          bash mirror_image.sh $IMAGE_NAME $version
+
+      - name: Mirroring Ruby Image
+        env:
+          IMAGE_NAME: ruby
+        run: |
+          version=$(docker run --rm $SOURCE_REGISTRY/$IMAGE_NAME:latest --version | grep -oP "[0-9]+\.[0-9]+")
+          bash mirror_image.sh $IMAGE_NAME $version
+
+      - name: Mirroring Java (JRE) Image
+        env:
+          IMAGE_NAME: jre
+        run: |
+          version=$(docker run --rm $SOURCE_REGISTRY/$IMAGE_NAME:latest --version | grep -oP "[0-9]+\.[0-9]+" | head -n 1)
+          bash mirror_image.sh $IMAGE_NAME $version
+
+      - name: Mirroring Static Image
+        env:
+          IMAGE_NAME: static
+        run: ./regctl image copy $SOURCE_REGISTRY/$IMAGE_NAME:latest $TARGET_REGISTRY/$IMAGE_NAME:latest
