@@ -1,0 +1,57 @@
+name: Mirroring Images
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: 0 12 * * *
+
+permissions:
+  id-token: write
+  packages: write
+
+concurrency:
+  group: "image-mirror"
+
+jobs:
+  Mirror-Images:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install regclient
+        run: |
+          sudo apt-get install curl -y
+          curl -L https://github.com/regclient/regclient/releases/latest/download/regctl-linux-amd64 > regctl
+          chmod 755 regctl
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Mirror PostgreSQL Images
+        env:
+          TARGET_IMAGE: "ghcr.io/${{ github.repository }}/postgres"
+        run: |
+          version=$(docker run --rm cgr.dev/chainguard/postgres:latest --version | grep -oP "[0-9]+\.[0-9]+")
+          IFS="." read -r -a parts <<< $version
+          versions=(latest)
+          current=""
+          for value in ${parts[@]}; do [[ -z $current ]] && current=$value || current+=".$value" ; versions=(${versions[@]} "$current"); done
+          for tag in ${versions[@]}; do ./regctl image copy cgr.dev/chainguard/postgres:latest $TARGET_IMAGE:$tag; done
+
+      - name: Mirror Nginx Images
+        env:
+          TARGET_IMAGE: "ghcr.io/${{ github.repository }}/nginx"
+        run: |
+          version=$(docker run --rm cgr.dev/chainguard/nginx:latest -v | grep -oP "[0-9]+\.[0-9]+")
+          IFS="." read -r -a parts <<< $version
+          versions=(latest)
+          current=""
+          for value in ${parts[@]}; do [[ -z $current ]] && current=$value || current+=".$value" ; versions=(${versions[@]} "$current"); done
+          for tag in ${versions[@]}; do ./regctl image copy cgr.dev/chainguard/nginx:latest $TARGET_IMAGE:$tag; done
+
+      - name: Mirror Static Images
+        env:
+            TARGET_IMAGE: "ghcr.io/${{ github.repository }}/static"
+        run: ./regctl image copy cgr.dev/chainguard/static:latest $TARGET_IMAGE:latest
