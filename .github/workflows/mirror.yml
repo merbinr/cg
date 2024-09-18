@@ -54,24 +54,42 @@ jobs:
         env:
           IMAGE_NAME: python
         run: |
-          version=$(docker run --rm $SOURCE_REGISTRY/$IMAGE_NAME:latest --version | grep -oP "[0-9]+\.[0-9]+")
-          bash mirror_image.sh $IMAGE_NAME $version
+          prod_version=$(docker run --rm $SOURCE_REGISTRY/$IMAGE_NAME:latest --version | grep -oP "[0-9]+\.[0-9]+")
+          bash mirror_image.sh $IMAGE_NAME $prod_version
+
+          dev_version=$(docker run --rm $SOURCE_REGISTRY/$IMAGE_NAME:latest-dev --version | grep -oP "[0-9]+\.[0-9]+")
+          dev_version="$dev_version-dev"
+          bash mirror_image.sh $IMAGE_NAME $dev_version
 
       - name: Mirroring Ruby Image
         env:
           IMAGE_NAME: ruby
         run: |
-          version=$(docker run --rm $SOURCE_REGISTRY/$IMAGE_NAME:latest --version | grep -oP "[0-9]+\.[0-9]+")
-          bash mirror_image.sh $IMAGE_NAME $version
+          prod_version=$(docker run --rm $SOURCE_REGISTRY/$IMAGE_NAME:latest --version | grep -oP "[0-9]+\.[0-9]+")
+          bash mirror_image.sh $IMAGE_NAME $prod_version
+
+          dev_version=$(docker run --rm $SOURCE_REGISTRY/$IMAGE_NAME:latest-dev --version | grep -oP "[0-9]+\.[0-9]+")
+          dev_version="$dev_version-dev"
+          bash mirror_image.sh $IMAGE_NAME $dev_version
 
       - name: Mirroring Java (JRE) Image
         env:
           IMAGE_NAME: jre
         run: |
-          version=$(docker run --rm $SOURCE_REGISTRY/$IMAGE_NAME:latest --version | grep -oP "[0-9]+\.[0-9]+" | head -n 1)
-          bash mirror_image.sh $IMAGE_NAME $version
+          prod_version=$(docker run --rm $SOURCE_REGISTRY/$IMAGE_NAME:latest --version | grep -oP "[0-9]+\.[0-9]+" | head -n 1)
+          bash mirror_image.sh $IMAGE_NAME $prod_version
 
-      - name: Mirroring Static Image
+          dev_version=$(docker run --rm $SOURCE_REGISTRY/$IMAGE_NAME:latest-dev --version | grep -oP "[0-9]+\.[0-9]+" | head -n 1)
+          dev_version="$dev_version-dev"
+          bash mirror_image.sh $IMAGE_NAME $dev_version
+
+      - name: Mirroring Node Image
         env:
-          IMAGE_NAME: static
-        run: ./regctl image copy $SOURCE_REGISTRY/$IMAGE_NAME:latest $TARGET_REGISTRY/$IMAGE_NAME:latest
+          IMAGE_NAME: node
+        run: |
+          prod_version=$(docker run --rm $SOURCE_REGISTRY/$IMAGE_NAME:latest --version | grep -oP "[0-9]+\.[0-9]+")
+          bash mirror_image.sh $IMAGE_NAME $prod_version
+
+          dev_version=$(docker run --rm $SOURCE_REGISTRY/$IMAGE_NAME:latest-dev --version | grep -oP "[0-9]+\.[0-9]+")
+          dev_version="$dev_version-dev"
+          bash mirror_image.sh $IMAGE_NAME $dev_version
