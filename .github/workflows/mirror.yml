@@ -40,56 +40,66 @@ jobs:
         env:
           IMAGE_NAME: postgres
         run: |
+          source_tag="latest"
           version=$(docker run --rm $SOURCE_REGISTRY/$IMAGE_NAME:latest --version | grep -oP "[0-9]+\.[0-9]+")
-          bash mirror_image.sh $IMAGE_NAME $version
+          bash mirror_image.sh $IMAGE_NAME $version $source_tag
 
       - name: Mirroring Nginx Image
         env:
           IMAGE_NAME: nginx
         run: |
           version=$(docker run --rm $SOURCE_REGISTRY/$IMAGE_NAME:latest -v 2>&1 | grep -oP "[0-9]+\.[0-9]+")
-          bash mirror_image.sh $IMAGE_NAME $version
+          source_tag="latest"
+          bash mirror_image.sh $IMAGE_NAME $version $source_tag
 
       - name: Mirroring Python Image
         env:
           IMAGE_NAME: python
         run: |
           prod_version=$(docker run --rm $SOURCE_REGISTRY/$IMAGE_NAME:latest --version | grep -oP "[0-9]+\.[0-9]+")
-          bash mirror_image.sh $IMAGE_NAME $prod_version
+          source_tag="latest"
+          bash mirror_image.sh $IMAGE_NAME $prod_version $source_tag
 
           dev_version=$(docker run --rm $SOURCE_REGISTRY/$IMAGE_NAME:latest-dev --version | grep -oP "[0-9]+\.[0-9]+")
           dev_version="$dev_version-dev"
-          bash mirror_image.sh $IMAGE_NAME $dev_version
+          source_tag="latest-dev"
+          bash mirror_image.sh $IMAGE_NAME $dev_version $source_tag
 
       - name: Mirroring Ruby Image
         env:
           IMAGE_NAME: ruby
         run: |
           prod_version=$(docker run --rm $SOURCE_REGISTRY/$IMAGE_NAME:latest --version | grep -oP "[0-9]+\.[0-9]+")
-          bash mirror_image.sh $IMAGE_NAME $prod_version
+          source_tag="latest"
+          bash mirror_image.sh $IMAGE_NAME $prod_version $source_tag
 
           dev_version=$(docker run --rm $SOURCE_REGISTRY/$IMAGE_NAME:latest-dev --version | grep -oP "[0-9]+\.[0-9]+")
           dev_version="$dev_version-dev"
-          bash mirror_image.sh $IMAGE_NAME $dev_version
+          source_tag="latest-dev"
+          bash mirror_image.sh $IMAGE_NAME $dev_version $source_tag
 
       - name: Mirroring Java (JRE) Image
         env:
           IMAGE_NAME: jre
         run: |
           prod_version=$(docker run --rm $SOURCE_REGISTRY/$IMAGE_NAME:latest --version | grep -oP '(?<=openjdk\s)\d+(\.\d+)?')
-          bash mirror_image.sh $IMAGE_NAME $prod_version
+          source_tag="latest"
+          bash mirror_image.sh $IMAGE_NAME $prod_version $source_tag
 
           dev_version=$(docker run --rm $SOURCE_REGISTRY/$IMAGE_NAME:latest-dev --version | grep -oP '(?<=openjdk\s)\d+(\.\d+)?')
           dev_version="$dev_version-dev"
-          bash mirror_image.sh $IMAGE_NAME $dev_version
+          source_tag="latest-dev"
+          bash mirror_image.sh $IMAGE_NAME $dev_version $source_tag
 
       - name: Mirroring Node Image
         env:
           IMAGE_NAME: node
         run: |
           prod_version=$(docker run --rm $SOURCE_REGISTRY/$IMAGE_NAME:latest --version | grep -oP "[0-9]+\.[0-9]+")
-          bash mirror_image.sh $IMAGE_NAME $prod_version
+          source_tag="latest"
+          bash mirror_image.sh $IMAGE_NAME $prod_version $source_tag
 
           dev_version=$(docker run --rm $SOURCE_REGISTRY/$IMAGE_NAME:latest-dev --version | grep -oP "[0-9]+\.[0-9]+")
           dev_version="$dev_version-dev"
-          bash mirror_image.sh $IMAGE_NAME $dev_version
+          source_tag="latest-dev"
+          bash mirror_image.sh $IMAGE_NAME $dev_version $source_tag
